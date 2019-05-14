@@ -172,4 +172,172 @@ test['Children']=test['Children'].astype(int)
 
 test['Age']=test['Age'].fillna(value=test.Age.mean())
 
-    
+# Exploring the dataset
+
+bins=np.arange(0,train.Age.max()+10,10)
+plt.hist(train['Age'],rwidth=0.6,bins=bins)
+plt.title('Distribution of the dataset according to Age.')
+plt.xlabel('Age')
+plt.ylabel('Count')
+plt.show();
+
+# From the above histogram it is clear that majority of the dataset contains people of age between 20 to 30, followed by those between 30 and 40.
+
+sb.countplot(data=train,x='Survived',hue='Sex');
+
+# The bar chart above compares the passengers survived or not on gender basis.
+
+# From above it is clear that among those who survived females are high in number as compared to males and among who did not survive males are high in number.
+
+sb.countplot(data=train,x='Survived',hue='Pclass');
+
+# The bar chart above compares the passengers survived or not on socio economic status.
+
+# The above chart shows that first class passengers were preferred over other passsengers at the time of rescue,which is quite evident from above graph as the number of third class passengers are high among those who did not survive.
+
+plt.figure(figsize=[12,7])
+sb.violinplot(data=train,x='Pclass',y='Fare')
+plt.show();
+
+
+# The violinplot above shows the distribution of fares of passengers depending upon their socio-economic status (Pclass).
+
+# From the plot it is clear that passengers belonging to first class have the highest fares along with presence of outliers beyond 500. Those belonging to second class have their fares between 0 to 100.
+
+# And those belonging to third class majority of their fares are below 50 and the distribution of fare is unimodal.
+
+# The dot at the center of the violin plot depicts the median of the distribution thereby depicting that median among different class can be compared as
+
+# (Pclass=1)median > (Pclass=1)median > (Pclass=1)median
+
+# Converting the Sex column to a dumy variable
+
+test
+
+test[['Male','Gender']]=pd.get_dummies(test['Sex'])
+
+test.drop(['Sex'],axis=1,inplace=True)
+
+test
+
+# As it is evident from above that if Gender is one it denotes a male or else a female thereby dropping male column so as to avoid redundancy in the matrix calculation.
+
+test.drop(['Male'],axis=1,inplace=True)
+test.info()
+
+# Regression Analysis
+
+# Dummies for gender in training dataset
+
+train[['Male','Gender']]=pd.get_dummies(train['Sex'])
+train.drop(['Sex'],axis=1,inplace=True)
+train.drop(['Male'],axis=1,inplace=True)
+
+# Importing relevant libraries
+
+from sklearn.linear_model import LogisticRegression as L
+x=train[['Gender','Age','Pclass']]
+y=train['Survived']
+reg=L()
+reg.fit(x,y)
+
+# Accuracy of the model
+
+reg.score(x,y)
+
+# Coefficients of features
+
+reg.coef_
+
+# Intercept
+
+reg.intercept_
+
+# Using F regression so as to ensure that the features used are significant.
+
+from sklearn.feature_selection import f_regression
+
+f_regression(x,y)
+
+p_values=f_regression(x,y)[1]
+
+p_values.round(3)
+
+# From the p-values above it is clear that all the features are significant.
+
+test.columns
+
+pred=test.drop(['PassengerId', 'Name', 'Ticket', 'Fare', 'Embarked',
+       'Spouse', 'Sibling', 'Children', 'Parents'],axis=1)
+
+y_pred=reg.predict(pred)
+
+y_true=gender['Survived']
+
+# Checking the Accuracy of the Model
+
+from sklearn import metrics
+
+metrics.accuracy_score(y_true,y_pred)
+
+0.7392344497607656
+
+# The accuracy of the model turns out to be 74% approximately on the testing dataset which is smaller than that of the training model.
+
+# Variance Inflation Factor
+
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+variables = train[['Gender','Age','Pclass']]
+vif = pd.DataFrame()
+vif["VIF"] = [variance_inflation_factor(variables.values, i) for i in range(variables.shape[1])]
+vif["features"] = variables.columns
+
+# Checking the table
+
+vif
+
+# From above table it is clear that Vif for each of the features is normal except that only Pclass has vif close to 4.
+
+# Regression taking Embarked port into consideration
+
+train.Embarked.value_counts()
+train[['C','Q','S']]=pd.get_dummies(train['Embarked'])
+train
+
+x=train[['Gender','Age','Pclass','Q','S']]
+y=train['Survived']
+
+reg=L()
+
+reg.fit(x,y)
+
+reg.score(x,y)
+
+test.Embarked.value_counts()
+
+test[['C','Q','S']]=pd.get_dummies(test['Embarked'])
+
+test
+
+pred=test.drop(['PassengerId', 'Name', 'Ticket', 'Fare', 'Embarked',
+       'Spouse', 'Sibling', 'Children', 'Parents','C'],axis=1)
+
+y_pred=reg.predict(pred)
+
+metrics.accuracy_score(y_true,y_pred)
+
+# It is evident from above that if we take embarked port into consideration then then there is also slight reduction in the accuracy of the model. Thereby we would prefer dropping the embarked port feature according to this model.
+
+# Conclusion
+
+# The histogram for age distribution shows that majority of the dataset contains people of age between 20 to 30, followed by those between 30 and 40.
+
+# First class passengers were preferred over other passsengers at the time of rescue,as the number of third class passengers are high among those who did not survive.
+
+# The violinplot shows that distribution of fares of passengers depending upon their socio-economic status (Pclass).From the plot it is clear that passengers belonging to first class have the highest fares along with presence of outliers beyond 500. Those belonging to second class have their fares between 0 to 100.And those belonging to third class majority of their fares are below 50 and the distribution of fare is unimodal. Thus it can be concluded that fares for passengers of First class are higher than that of other class also they belong to the upper class of society.
+
+# In the above regression analysis firstly regression has been performed on three features namely gender,age and passenger class where the accuracy of training and testing set were 79.6% and 73.9% respectively.
+
+# In the second phase of regression analysis we decided to included embarked port also in the features there the accuracy of testing and training set were 79% and 72.24% respectively. So it can be concluded that included embarked port in our features does not increase the accuracy of our model so we consider dropping it.
+       
